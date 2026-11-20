@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Środowisko eksperymentalne</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+    .page {
+      width: min(1200px, 96vw);
+      margin: 24px auto;
+    }
+    .card {
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h1, h2, h3 { margin-top: 0; }
+    .instruction {
+      max-width: 900px;
+      margin: 0 auto 24px;
+      text-align: left;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .progress {
+      margin-bottom: 18px;
+      font-size: 15px;
+      color: #4b5563;
+      text-align: center;
+    }
+    .expression-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .number-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+    }
+    .box-label {
+      font-size: 17px;
+      font-weight: bold;
+    }
+    .square {
+      width: 110px;
+      height: 110px;
+      border: 4px solid #222;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 40px;
+      font-weight: bold;
+      outline: none;
+    }
+    .blue { background: #4d8df7; color: white; }
+    .red { background: #e94b4b; color: white; }
+    .operator {
+      font-size: 44px;
+      font-weight: bold;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .parenthesis {
+      font-size: 72px;
+      line-height: 1;
+    }
+    .button-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button {
+      min-width: 90px;
+      padding: 10px 12px;
+      font-size: 15px;
+      font-weight: bold;
+      border: 2px solid #222;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: #e9edf2; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .primary {
+      background: #111827;
+      color: white;
+    }
+    .result-section {
+      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .equals {
+      font-size: 42px;
+      font-weight: bold;
+    }
+    .status {
+      margin-top: 18px;
+      min-height: 24px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .next-wrap {
+      margin-top: 24px;
+      text-align: center;
+    }
+    .hidden { display: none; }
+    .center { text-align: center; }
+    .participant-input {
+      width: min(360px, 90%);
+      padding: 12px 14px;
+      font-size: 18px;
+      border: 2px solid #9ca3af;
+      border-radius: 8px;
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px;
+      font-size: 17px;
+      line-height: 1.45;
+      border: 2px solid #9ca3af;
+      border-radius: 8px;
+      resize: vertical;
+    }
+    @media (max-width: 700px) {
+      .square { width: 92px; height: 92px; font-size: 34px; }
+      .operator { font-size: 36px; }
+      .parenthesis { font-size: 58px; }
+      button { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+<main class="page">
+  <section id="startCard" class="card center">
+    <h1>Prosta arytmetyka</h1>
+    <p>Wpisz swój numer uczestnika, a następnie przejdź do krótkiego treningu.</p>
+    <input id="participantNumber" class="participant-input" type="text" inputmode="numeric"
+           placeholder="Numer uczestnika" autocomplete="off">
+    <div class="next-wrap">
+      <button id="startTraining" class="primary" type="button">Rozpocznij trening</button>
+    </div>
+    <div id="startStatus" class="status"></div>
+  </section>
+
+  <section id="trainingCard" class="card hidden">
+    <div id="trainingProgress" class="progress"></div>
+    <h1>Trening</h1>
+    <div id="trainingInstruction" class="instruction"></div>
+
+    <div class="expression-row">
+      <div class="number-group">
+        <button id="trainingStart" type="button" disabled>Początek</button>
+        <div class="box-label">Liczba</div>
+        <input id="trainingBlue" class="square blue" type="number" value="3" readonly>
+        <div class="button-row">
+          <button id="trainingMove" type="button">Przenieś do wyniku</button>
+          <button id="trainingDelete" type="button">Usuń</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="equals">=</div>
+      <div class="box-label">Wynik</div>
+      <input id="trainingResult" class="square red" type="number" value="0" readonly>
+      <button id="trainingReset" type="button">Reset globalny</button>
+    </div>
+
+    <div id="trainingStatus" class="status"></div>
+    <div class="next-wrap">
+      <button id="trainingNext" class="primary" type="button" disabled>Dalej</button>
+    </div>
+  </section>
+
+  <section id="trainingExplanationCard" class="card hidden center">
+    <h1 id="trainingExplanationTitle">Wyjaśnienie</h1>
+    <div id="trainingExplanationText" class="instruction"></div>
+    <div class="next-wrap">
+      <button id="trainingExplanationNext" class="primary" type="button">Dalej</button>
+    </div>
+  </section>
+
+  <section id="trainingDoneCard" class="card hidden center">
+    <h1>Trening ukończony</h1>
+    <p>Poprawnie ukończyłeś trening. Możesz przejść do właściwych zadań.</p>
+    <div class="next-wrap">
+      <button id="showMainInstruction" class="primary" type="button">Dalej</button>
+    </div>
+  </section>
+
+  <section id="mainInstructionCard" class="card hidden">
+    <h1>Instrukcja do zadań właściwych</h1>
+    <div class="instruction">
+      <p>Za chwilę rozpoczną się właściwe zadania.</p>
+      <p>W każdej części zobaczysz kolejno <strong>dwa zadania tego samego typu</strong>. Najpierw wykonaj pierwsze zadanie, a następnie drugie.</p>
+      <p>Po rozwiązaniu obu zadań zostaniesz poproszony o napisanie <strong>ogólnej instrukcji, której można byłoby użyć do wykonania innych zadań tego samego typu</strong>.</p>
+      <p>Instrukcja powinna być na tyle ogólna, aby można było zastosować ją także do innych zadań tego samego typu, z innymi wartościami liczb.</p>
+      <p>Podczas pisania instrukcji drugi z rozwiązanych przykładów pozostanie widoczny na ekranie.</p>
+    </div>
+    <div class="next-wrap">
+      <button id="beginExperiment" class="primary" type="button">Przejdź do zadań</button>
+    </div>
+  </section>
+
+  <section id="trialCard" class="card hidden">
+    <div id="progress" class="progress"></div>
+    <h1 id="trialTitle"></h1>
+
+    <div id="exampleSection">
+      <h2 id="exampleTitle"></h2>
+      <div id="taskInstruction" class="instruction"></div>
+
+      <div id="expressionRow" class="expression-row"></div>
+
+      <div class="result-section">
+        <div class="equals">=</div>
+        <div class="box-label">Wynik</div>
+        <input id="result" class="square red" type="number" value="0" readonly>
+        <button id="globalReset" type="button">Reset globalny</button>
+      </div>
+
+      <div id="status" class="status"></div>
+
+      <div class="next-wrap">
+        <button id="nextExample" class="primary" type="button">Dalej</button>
+      </div>
+    </div>
+
+    <div id="responseSection" class="hidden">
+      <h2>Instrukcja ogólna</h2>
+      <p>
+        Patrząc na rozwiązany powyżej przykład, opisz własnymi słowami,
+        jak ogólnie wykonać tego rodzaju działanie. Twoja instrukcja powinna
+        działać dla dowolnych wartości liczb.
+      </p>
+      <textarea id="generalResponse" placeholder="Wpisz tutaj swoją instrukcję..."></textarea>
+      <div class="next-wrap">
+        <button id="submitResponse" class="primary" type="button">Zatwierdź odpowiedź</button>
+      </div>
+      <div id="responseStatus" class="status"></div>
+    </div>
+  </section>
+
+  <section id="finishCard" class="card hidden">
+    <h1>Dziękujemy za udział w badaniu</h1>
+    <p>Jeśli chcesz poznać swój indywidualny wynik, zapisz swój numer lub kod osoby badanej.</p>
+  </section>
+</main>
+
+<script>
+  // =========================================================
+  // KONFIGURACJA EKSPERYMENTU
+  // Tu zmieniasz triale bez dotykania kodu interfejsu.
+  // =========================================================
+  const experimentConfig = {
+    study_id: "prosta_arytmetyka_v1",
+    trials: [
+      {
+        id: "task_1_zero",
+        task: "zero",
+        label: "Zadanie 1 – Zerowanie",
+        instruction: "Wykonaj operacje tak, aby na końcu we wszystkich polach znajdowało się zero.",
+        examples: ["5", "7"],
+        ask_general_rule: true
+      },
+      {
+        id: "task_2_transfer_all",
+        task: "transfer_all",
+        label: "Zadanie 2 – Przenieś wszystkie",
+        instruction: "Wykonaj operacje tak, aby na końcu w czerwonym polu znajdowała się taka sama wartość, jaką na początku miało niebieskie pole, a wartość w niebieskim polu wynosiła zero.",
+        examples: ["4", "6"],
+        ask_general_rule: true
+      },
+      {
+        id: "task_3_identity",
+        task: "identity",
+        label: "Zadanie 3 – Tożsamość",
+        instruction: "Wykonaj operacje tak, aby na końcu zarówno w czerwonym polu, jak i w niebieskim polu znajdowała się taka sama wartość, jaką na początku miało niebieskie pole.",
+        examples: ["3", "5"],
+        ask_general_rule: true
+      },
+      {
+        id: "task_4_addition",
+        task: "addition",
+        label: "Zadanie 4 – Dodawanie",
+        instruction: "Wykonaj operacje tak, aby na końcu w czerwonym polu znajdowała się suma liczb z niebieskich pól.",
+        examples: ["4+5", "3+7"],
+        ask_general_rule: true
+      },
+      {
+        id: "task_5_subtraction",
+        task: "subtraction",
+        label: "Zadanie 5 – Odejmowanie",
+        instruction: "Wykonaj operacje tak, aby na końcu w czerwonym polu znajdowała się wartość różnicy: Liczba 1 minus Liczba 2.",
+        examples: ["8-3", "7-2"],
+        ask_general_rule: true
+      },
+      {
+        id: "task_6_multiplication",
+        task: "multiplication",
+        label: "Zadanie 6 – Mnożenie",
+        instruction: "Wykonaj operacje tak, aby na końcu w czerwonym polu znajdował się wynik mnożenia Liczby 1 przez Liczbę 2.",
+        examples: ["3*4", "2*5"],
+        ask_general_rule: true
+      }
+    ]
+  };
+
+  // =========================================================
+  // ZAPIS I UPLOAD DANYCH
+  // =========================================================
+  const dataConfig = {
+    local_queue_key: "prosta_arytmetyka_pending_trials",
+    uploaded_key: "prosta_arytmetyka_uploaded_trials",
+    upload_endpoint: "https://tvblflfewpidxvkbcsoh.supabase.co/rest/v1/trials",
+    publishable_key: "sb_publishable_BP-Zl3T-psK3cP4GVkFuGQ_hYM7_B_6"
+  };
+
+
+
+  // =========================================================
+  // LOKALNA KOLEJKA TRIALI
+  // =========================================================
+  function readJsonArray(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return [];
+      const value = JSON.parse(raw);
+      return Array.isArray(value) ? value : [];
+    } catch (error) {
+      console.error("Błąd odczytu lokalnych danych:", error);
+      return [];
+    }
+  }
+
+  function writeJsonArray(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function makeUploadId(participantId, trialId) {
+    return `${participantId}_${trialId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function queueTrialForUpload(trialRecord) {
+    const queue = readJsonArray(dataConfig.local_queue_key);
+
+    const queued = {
+      ...trialRecord,
+      upload_id: makeUploadId(trialRecord.participant_id, trialRecord.trial_id),
+      upload_status: "pending",
+      upload_attempts: 0,
+      queued_at: new Date().toISOString()
+    };
+
+    queue.push(queued);
+    writeJsonArray(dataConfig.local_queue_key, queue);
+    return queued;
+  }
+
+  function updatePendingRecord(uploadId, changes) {
+    const queue = readJsonArray(dataConfig.local_queue_key);
+    const index = queue.findIndex(item => item.upload_id === uploadId);
+
+    if (index === -1) return;
+
+    queue[index] = {
+      ...queue[index],
+      ...changes
+    };
+
+    writeJsonArray(dataConfig.local_queue_key, queue);
+  }
+
+  function markAsUploaded(uploadId) {
+    const queue = readJsonArray(dataConfig.local_queue_key);
+    const uploaded = readJsonArray(dataConfig.uploaded_key);
+    const index = queue.findIndex(item => item.upload_id === uploadId);
+
+    if (index === -1) return;
+
+    const [record] = queue.splice(index, 1);
+
+    uploaded.push({
+      ...record,
+      upload_status: "uploaded",
+      uploaded_at: new Date().toISOString()
+    });
+
+    writeJsonArray(dataConfig.local_queue_key, queue);
+    writeJsonArray(dataConfig.uploaded_key, uploaded);
+  }
+
+  async function uploadTrialRecord(record) {
+    updatePendingRecord(record.upload_id, {
+      upload_attempts: (record.upload_attempts || 0) + 1,
+      last_upload_attempt_at: new Date().toISOString()
+    });
+
+    const payload = {
+      participant_id: record.participant_id,
+      study_id: record.study_id,
+      trial_id: record.trial_id,
+      task: record.task,
+      label: record.label,
+      examples: record.examples,
+      general_response: record.general_response,
+      general_response_duration_ms: record.general_response_duration_ms,
+      completed_at: record.completed_at,
+      client_upload_id: record.upload_id
+    };
+
+    try {
+      const response = await fetch(dataConfig.upload_endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": dataConfig.publishable_key,
+          "Content-Profile": "public",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.status === 409) {
+        markAsUploaded(record.upload_id);
+        return { ok: true, pending: false, duplicate: true };
+      }
+
+      if (!response.ok) {
+        const details = await response.text();
+        console.error("Supabase upload failed", {
+          url: dataConfig.upload_endpoint,
+          status: response.status,
+          statusText: response.statusText,
+          response: details
+        });
+        throw new Error(`HTTP ${response.status}: ${details}`);
+      }
+
+      markAsUploaded(record.upload_id);
+      return { ok: true, pending: false };
+    } catch (error) {
+      updatePendingRecord(record.upload_id, {
+        upload_status: "pending",
+        last_upload_error: String(error)
+      });
+
+      console.error("Błąd uploadu trialu:", error);
+
+      return {
+        ok: false,
+        pending: true,
+        reason: "upload_error",
+        error: String(error)
+      };
+    }
+  }
+
+  async function retryPendingUploads() {
+    const queue = readJsonArray(dataConfig.local_queue_key);
+
+    for (const record of queue) {
+      await uploadTrialRecord(record);
+    }
+  }
+
+  function exportLocalDataSnapshot() {
+    return {
+      pending_trials: readJsonArray(dataConfig.local_queue_key),
+      uploaded_trials: readJsonArray(dataConfig.uploaded_key)
+    };
+  }
+
+  // =========================================================
+  // STAN EKSPERYMENTU
+  // =========================================================
+  let currentTrialIndex = 0;
+  let currentExampleIndex = 0;
+  let currentCalculator = null;
+  let generalResponseStartedAt = null;
+
+  let participantId = "";
+  let experimentData = null;
+
+  const startCard = document.getElementById("startCard");
+  const trainingCard = document.getElementById("trainingCard");
+  const participantNumber = document.getElementById("participantNumber");
+  const startTraining = document.getElementById("startTraining");
+  const startStatus = document.getElementById("startStatus");
+
+  const trainingProgress = document.getElementById("trainingProgress");
+  const trainingInstruction = document.getElementById("trainingInstruction");
+  const trainingBlue = document.getElementById("trainingBlue");
+  const trainingResult = document.getElementById("trainingResult");
+  const trainingStart = document.getElementById("trainingStart");
+  const trainingMove = document.getElementById("trainingMove");
+  const trainingDelete = document.getElementById("trainingDelete");
+  const trainingReset = document.getElementById("trainingReset");
+  const trainingStatus = document.getElementById("trainingStatus");
+  const trainingNext = document.getElementById("trainingNext");
+  const trainingExplanationCard = document.getElementById("trainingExplanationCard");
+  const trainingExplanationTitle = document.getElementById("trainingExplanationTitle");
+  const trainingExplanationText = document.getElementById("trainingExplanationText");
+  const trainingExplanationNext = document.getElementById("trainingExplanationNext");
+  const trainingDoneCard = document.getElementById("trainingDoneCard");
+  const showMainInstruction = document.getElementById("showMainInstruction");
+  const mainInstructionCard = document.getElementById("mainInstructionCard");
+  const beginExperiment = document.getElementById("beginExperiment");
+  const trialCardEarly = document.getElementById("trialCard");
+
+  const trainingSteps = [
+    {
+      instruction: "Kliknij „Przenieś do wyniku”. Zobacz, co dzieje się z liczbą i z Wynikiem.",
+      initial: 3,
+      check: () => Number(trainingBlue.value) === 2 && Number(trainingResult.value) === 1
+    },
+    {
+      instruction: "Kliknij „Usuń”. Zobacz, co dzieje się z liczbą i z Wynikiem.",
+      initial: 3,
+      check: () => Number(trainingBlue.value) === 2 && Number(trainingResult.value) === 0
+    },
+    {
+      instruction: "Używając „Usuń”, doprowadź liczbę do zera. Następnie kliknij „Początek”.",
+      initial: 2,
+      check: () => Number(trainingBlue.value) === 2 && Number(trainingResult.value) === 0
+    },
+    {
+      instruction: "Zmień stan kalkulatora, a następnie kliknij „Reset globalny”.",
+      initial: 3,
+      check: () => Number(trainingBlue.value) === 3 && Number(trainingResult.value) === 0
+    }
+  ];
+
+  const trainingExplanations = [
+    {
+      title: "Przenieś do wyniku",
+      text: "Każde naciśnięcie przycisku „Przenieś do wyniku” zmniejsza wartość w wybranym niebieskim polu o jeden i jednocześnie zwiększa wartość w czerwonym polu „Wynik” o jeden. Jeżeli na ekranie znajduje się więcej niż jedno niebieskie pole, możesz przenosić z nich wartości w dowolnej kolejności — najpierw z jednego pola, potem z drugiego albo na zmianę."
+    },
+    {
+      title: "Usuń",
+      text: "Każde naciśnięcie przycisku „Usuń” zmniejsza wartość w wybranym niebieskim polu o jeden. Wartość w polu „Wynik” pozostaje bez zmian."
+    },
+    {
+      title: "Początek",
+      text: "Przycisk „Początek”, znajdujący się nad niebieskim polem, przywraca w tym polu wartość, którą miało ono na początku zadania."
+    },
+    {
+      title: "Reset globalny",
+      text: "Naciśnięcie przycisku „Reset globalny” przywraca wszystkie pola do wartości, które miały na początku zadania."
+    }
+  ];
+
+  let trainingIndex = 0;
+  let trainingInitial = 3;
+
+  function renderTrainingStep() {
+    const step = trainingSteps[trainingIndex];
+    trainingInitial = step.initial;
+    trainingBlue.value = step.initial;
+    trainingResult.value = 0;
+    trainingStart.disabled = true;
+    trainingInstruction.textContent = step.instruction;
+    trainingProgress.textContent = `Trening ${trainingIndex + 1} z ${trainingSteps.length}`;
+    trainingStatus.textContent = "";
+    trainingNext.disabled = true;
+  }
+
+  function updateTraining() {
+    trainingStart.disabled = Number(trainingBlue.value) !== 0;
+    if (trainingSteps[trainingIndex].check()) {
+      trainingStatus.textContent = "Dobrze. Możesz przejść dalej.";
+      trainingNext.disabled = false;
+    }
+  }
+
+  trainingMove.addEventListener("click", () => {
+    if (Number(trainingBlue.value) > 0) {
+      trainingBlue.value = Number(trainingBlue.value) - 1;
+      trainingResult.value = Number(trainingResult.value) + 1;
+      updateTraining();
+    }
+  });
+
+  trainingDelete.addEventListener("click", () => {
+    if (Number(trainingBlue.value) > 0) {
+      trainingBlue.value = Number(trainingBlue.value) - 1;
+      updateTraining();
+    }
+  });
+
+  trainingStart.addEventListener("click", () => {
+    trainingBlue.value = trainingInitial;
+    updateTraining();
+  });
+
+  trainingReset.addEventListener("click", () => {
+    trainingBlue.value = trainingInitial;
+    trainingResult.value = 0;
+    updateTraining();
+  });
+
+  trainingNext.addEventListener("click", () => {
+    trainingCard.classList.add("hidden");
+
+    const explanation = trainingExplanations[trainingIndex];
+    trainingExplanationTitle.textContent = explanation.title;
+    trainingExplanationText.textContent = explanation.text;
+    trainingExplanationCard.classList.remove("hidden");
+  });
+
+  trainingExplanationNext.addEventListener("click", () => {
+    trainingExplanationCard.classList.add("hidden");
+    trainingIndex++;
+
+    if (trainingIndex < trainingSteps.length) {
+      trainingCard.classList.remove("hidden");
+      renderTrainingStep();
+    } else {
+      trainingDoneCard.classList.remove("hidden");
+    }
+  });
+
+  showMainInstruction.addEventListener("click", () => {
+    trainingDoneCard.classList.add("hidden");
+    mainInstructionCard.classList.remove("hidden");
+  });
+
+  beginExperiment.addEventListener("click", () => {
+    mainInstructionCard.classList.add("hidden");
+    trialCard.classList.remove("hidden");
+    renderCurrentExample();
+  });
+
+  startTraining.addEventListener("click", () => {
+    const value = participantNumber.value.trim();
+    if (!value) {
+      startStatus.textContent = "Wpisz numer uczestnika.";
+      participantNumber.focus();
+      return;
+    }
+
+    participantId = value;
+    experimentData = {
+      participant_id: participantId,
+      study_id: experimentConfig.study_id,
+      started_at: new Date().toISOString(),
+      trials: []
+    };
+
+    startCard.classList.add("hidden");
+    trainingCard.classList.remove("hidden");
+    renderTrainingStep();
+  });
+
+  // =========================================================
+  // DOM
+  // =========================================================
+  const trialCard = trialCardEarly;
+  const finishCard = document.getElementById("finishCard");
+  const progress = document.getElementById("progress");
+  const trialTitle = document.getElementById("trialTitle");
+  const exampleTitle = document.getElementById("exampleTitle");
+  const taskInstruction = document.getElementById("taskInstruction");
+  const exampleSection = document.getElementById("exampleSection");
+  const expressionRow = document.getElementById("expressionRow");
+  const result = document.getElementById("result");
+  const globalReset = document.getElementById("globalReset");
+  const status = document.getElementById("status");
+  const nextExample = document.getElementById("nextExample");
+
+  const responseSection = document.getElementById("responseSection");
+  const generalResponse = document.getElementById("generalResponse");
+  const submitResponse = document.getElementById("submitResponse");
+  const responseStatus = document.getElementById("responseStatus");
+
+
+  // =========================================================
+  // FUNKCJE POMOCNICZE
+  // =========================================================
+  function makeParticipantId() {
+    if (window.crypto && crypto.randomUUID) {
+      return "P-" + crypto.randomUUID().slice(0, 8);
+    }
+    return "P-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function tokenizeExpression(raw) {
+    const safe = String(raw).replace(/[^0-9+\-*/().\s]/g, "");
+    return safe.match(/\d+|[()+\-*/]/g) || [];
+  }
+
+  function symbolFor(token) {
+    if (token === "*") return "×";
+    if (token === "/") return "÷";
+    if (token === "-") return "−";
+    return token;
+  }
+
+  function getCurrentTrial() {
+    return experimentConfig.trials[currentTrialIndex];
+  }
+
+  function ensureTrialData() {
+    if (!experimentData.trials[currentTrialIndex]) {
+      const trial = getCurrentTrial();
+      experimentData.trials[currentTrialIndex] = {
+        id: trial.id,
+        task: trial.task,
+        label: trial.label,
+        examples: [],
+        general_response: ""
+      };
+    }
+    return experimentData.trials[currentTrialIndex];
+  }
+
+  // =========================================================
+  // KALKULATOR
+  // =========================================================
+  function buildCalculator(expression) {
+    expressionRow.innerHTML = "";
+    result.value = 0;
+    status.textContent = "";
+
+    const tokens = tokenizeExpression(expression);
+    const boxes = [];
+    const events = [];
+    let numberIndex = 0;
+    const startedAt = performance.now();
+
+    function getValue(input) {
+      const value = Number.parseInt(input.value, 10);
+      return Number.isInteger(value) && value >= 0 ? value : 0;
+    }
+
+    function snapshot() {
+      return {
+        boxes: boxes.map((box, i) => ({
+          number: i + 1,
+          value: getValue(box.input)
+        })),
+        result: getValue(result)
+      };
+    }
+
+    function log(action, boxNumber, before, after) {
+      events.push({
+        time_ms: Math.round(performance.now() - startedAt),
+        action,
+        box_number: boxNumber,
+        before,
+        after
+      });
+
+      // Po wykonaniu co najmniej jednej operacji można przejść dalej.
+      nextExample.disabled = false;
+    }
+
+    function updateStart(box) {
+      box.start.disabled = getValue(box.input) !== 0;
+    }
+
+    function makeBox(initialValue) {
+      numberIndex++;
+      const currentNumber = numberIndex;
+
+      const group = document.createElement("div");
+      group.className = "number-group";
+
+      const start = document.createElement("button");
+      start.type = "button";
+      start.textContent = "Początek";
+      start.disabled = initialValue !== 0;
+
+      const label = document.createElement("div");
+      label.className = "box-label";
+      label.textContent = `Liczba ${currentNumber}`;
+
+      const input = document.createElement("input");
+      input.className = "square blue";
+      input.type = "number";
+      input.readOnly = true;
+      input.value = initialValue;
+
+      const buttonRow = document.createElement("div");
+      buttonRow.className = "button-row";
+
+      const move = document.createElement("button");
+      move.type = "button";
+      move.textContent = "Przenieś do wyniku";
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Usuń";
+
+      buttonRow.append(move, remove);
+      group.append(start, label, input, buttonRow);
+
+      const box = {
+        input,
+        start,
+        initialValue
+      };
+
+      move.addEventListener("click", () => {
+        const value = getValue(input);
+        if (value <= 0) {
+          status.textContent = "W tym polu nie ma już jednostek do przeniesienia.";
+          return;
+        }
+
+        const before = snapshot();
+        input.value = value - 1;
+        result.value = getValue(result) + 1;
+        const after = snapshot();
+
+        log("transfer_to_result", currentNumber, before, after);
+        status.textContent = "Jedna jednostka została przeniesiona do Wyniku.";
+        updateStart(box);
+      });
+
+      remove.addEventListener("click", () => {
+        const value = getValue(input);
+        if (value <= 0) {
+          status.textContent = "W tym polu nie ma już jednostek do usunięcia.";
+          return;
+        }
+
+        const before = snapshot();
+        input.value = value - 1;
+        const after = snapshot();
+
+        log("delete", currentNumber, before, after);
+        status.textContent = "Jedna jednostka została usunięta.";
+        updateStart(box);
+      });
+
+      start.addEventListener("click", () => {
+        const before = snapshot();
+        input.value = box.initialValue;
+        const after = snapshot();
+
+        log("restore", currentNumber, before, after);
+        status.textContent = `Liczba ${currentNumber} została przywrócona do wartości początkowej.`;
+        updateStart(box);
+      });
+
+      boxes.push(box);
+      return group;
+    }
+
+    for (const token of tokens) {
+      if (/^\d+$/.test(token)) {
+        expressionRow.appendChild(makeBox(Number.parseInt(token, 10)));
+      } else {
+        const symbol = document.createElement("div");
+        symbol.className =
+          token === "(" || token === ")" ? "parenthesis" : "operator";
+        symbol.textContent = symbolFor(token);
+        expressionRow.appendChild(symbol);
+      }
+    }
+
+    function resetAll() {
+      const before = snapshot();
+      boxes.forEach(box => {
+        box.input.value = box.initialValue;
+        updateStart(box);
+      });
+      result.value = 0;
+      const after = snapshot();
+
+      log("global_reset", null, before, after);
+      status.textContent = "Przywrócono wartości początkowe.";
+    }
+
+    globalReset.onclick = resetAll;
+
+    return {
+      expression,
+      boxes,
+      events,
+      startedAt,
+      getFinalState: snapshot
+    };
+  }
+
+  // =========================================================
+  // PRZEBIEG EKSPERYMENTU
+  // =========================================================
+  function renderCurrentExample() {
+    const trial = getCurrentTrial();
+    ensureTrialData();
+
+    const expression = trial.examples[currentExampleIndex];
+
+    progress.textContent =
+      `Trial ${currentTrialIndex + 1} z ${experimentConfig.trials.length} · ` +
+      `Przykład ${currentExampleIndex + 1} z ${trial.examples.length}`;
+
+    trialTitle.textContent = trial.label;
+    exampleTitle.textContent = `Przykład ${currentExampleIndex + 1}`;
+    taskInstruction.textContent = trial.instruction;
+
+    exampleSection.classList.remove("hidden");
+    responseSection.classList.add("hidden");
+    responseStatus.textContent = "";
+    generalResponse.value = "";
+    generalResponseStartedAt = null;
+
+    currentCalculator = buildCalculator(expression);
+    nextExample.classList.remove("hidden");
+    nextExample.disabled = true;
+    globalReset.disabled = false;
+
+    nextExample.textContent =
+      currentExampleIndex === trial.examples.length - 1
+        ? "Przejdź do odpowiedzi ogólnej"
+        : "Dalej";
+  }
+
+  function saveCurrentExample() {
+    const trialData = ensureTrialData();
+    const exampleConfig = getCurrentTrial().examples[currentExampleIndex];
+
+    trialData.examples.push({
+      example_index: currentExampleIndex,
+      expression: exampleConfig,
+      final_state: currentCalculator.getFinalState(),
+      duration_ms: Math.round(performance.now() - currentCalculator.startedAt),
+      events: currentCalculator.events
+    });
+  }
+
+  nextExample.addEventListener("click", () => {
+    // Dodatkowe zabezpieczenie, niezależne od stanu przycisku.
+    if (!currentCalculator || currentCalculator.events.length === 0) {
+      status.textContent = "Wykonaj co najmniej jedną operację przed przejściem dalej.";
+      return;
+    }
+
+    const trial = getCurrentTrial();
+    const isLastExample =
+      currentExampleIndex === trial.examples.length - 1;
+
+    saveCurrentExample();
+
+    if (!isLastExample) {
+      currentExampleIndex++;
+      renderCurrentExample();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Odpowiedź ogólna pojawia się dopiero po ostatnim przykładzie,
+    // czyli przy obecnym configu dopiero po przykładzie 2.
+    if (trial.ask_general_rule) {
+      responseSection.classList.remove("hidden");
+      nextExample.classList.add("hidden");
+      globalReset.disabled = true;
+
+      currentCalculator.boxes?.forEach(box => {
+        box.start.disabled = true;
+        if (box.move) box.move.disabled = true;
+        if (box.remove) box.remove.disabled = true;
+      });
+
+      generalResponseStartedAt = performance.now();
+      progress.textContent =
+        `Trial ${currentTrialIndex + 1} z ${experimentConfig.trials.length} · Odpowiedź ogólna`;
+      generalResponse.focus();
+    } else {
+      advanceTrial();
+    }
+  });
+
+  submitResponse.addEventListener("click", async () => {
+    const text = generalResponse.value.trim();
+
+    if (!text) {
+      responseStatus.textContent = "Wpisz instrukcję ogólną przed zatwierdzeniem.";
+      return;
+    }
+
+    const trialData = ensureTrialData();
+    trialData.general_response = text;
+    trialData.general_response_duration_ms =
+      generalResponseStartedAt === null
+        ? null
+        : Math.round(performance.now() - generalResponseStartedAt);
+    trialData.completed_at = new Date().toISOString();
+
+    const trialRecord = {
+      participant_id: participantId,
+      study_id: experimentConfig.study_id,
+      trial_id: trialData.id,
+      task: trialData.task,
+      label: trialData.label,
+      examples: trialData.examples,
+      general_response: trialData.general_response,
+      general_response_duration_ms: trialData.general_response_duration_ms,
+      completed_at: trialData.completed_at
+    };
+
+    // Najpierw zapis lokalny, dopiero potem próba uploadu.
+    const queuedRecord = queueTrialForUpload(trialRecord);
+
+    responseStatus.textContent = "Odpowiedź została zapisana lokalnie.";
+
+    const uploadResult = await uploadTrialRecord(queuedRecord);
+
+    if (uploadResult.ok) {
+      responseStatus.textContent = "Odpowiedź została zapisana.";
+    } else {
+      responseStatus.textContent =
+        "Odpowiedź została zapisana lokalnie i zostanie wysłana ponownie później.";
+    }
+
+    advanceTrial();
+  });
+
+  function advanceTrial() {
+    currentTrialIndex++;
+    currentExampleIndex = 0;
+
+    if (currentTrialIndex >= experimentConfig.trials.length) {
+      finishExperiment();
+      return;
+    }
+
+    renderCurrentExample();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function finishExperiment() {
+    experimentData.finished_at = new Date().toISOString();
+
+    localStorage.setItem(
+      "arithmetic_experiment_data",
+      JSON.stringify(experimentData)
+    );
+
+    trialCard.classList.add("hidden");
+    finishCard.classList.remove("hidden");
+  }
+
+  // =========================================================
+  // EKSPORT
+  // =========================================================
+
+
+
+
+  // Start occurs after participant number and training.
+  // Spróbuj ponownie wysłać rekordy pozostające w kolejce z poprzedniej sesji.
+  retryPendingUploads();
+
+</script>
+</body>
+</html>
